@@ -5,7 +5,7 @@ using System.IO;
 
 namespace CryptoStegano
 {
-    abstract class Cipher
+    public abstract class Cipher
     {
         protected abstract string EncryptedFileExtension { get; }
 

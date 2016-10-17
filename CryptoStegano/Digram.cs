@@ -2,7 +2,7 @@
 {
     public class Digram
     {
-        int[] vector;
+        private int[] vector;
 
         public Digram()
         {

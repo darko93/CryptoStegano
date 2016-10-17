@@ -2,7 +2,7 @@
 {
     static class Ring
     {
-        const int n = 256;
+        private const int n = 256;
         public static int N => n;
 
         public static bool IsInvertibleMod(this int a, int n) => Inverse(a, n) != 0;

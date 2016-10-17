@@ -2,7 +2,7 @@
 {
     public class Matrix2x2
     {
-        int[,] array = null;
+        private int[,] array = null;
 
         public Matrix2x2()
         {

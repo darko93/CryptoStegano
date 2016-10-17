@@ -3,7 +3,7 @@ using System.Text;
 
 namespace CryptoStegano
 {
-    class AffineCipher : Cipher
+    public class AffineCipher : Cipher
     {
         const string encryptedFileExtension = ".aff";
 

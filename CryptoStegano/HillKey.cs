@@ -1,6 +1,6 @@
 ﻿namespace CryptoStegano
 {
-    class HillKey
+    public class HillKey
     {
         public Matrix2x2 Matrix { get; private set; }
         public Digram Digram { get; private set; }

@@ -1,6 +1,6 @@
 ﻿namespace CryptoStegano
 {
-    class AffineKey
+    public class AffineKey
     {
         public int A { get; private set; }
         public int B { get; private set; }
