@@ -5,20 +5,20 @@ namespace CryptoStegano
 {
     public class AffineCipher : Cipher
     {
-        const string encryptedFileExtension = ".aff";
+        private const string encryptedFileExtension = ".aff";
 
         protected override string EncryptedFileExtension => encryptedFileExtension;
 
-        int EncryptCharacter(int character, AffineKey encryptKey) =>
-            encryptKey.A * character + encryptKey.B; // It doesn't return value modulo N, because during writing character to the output file, we have to cast it to byte anyway.
+        private int EncryptCharacter(int character, AffineKey encryptKey) =>
+            encryptKey.A * character + encryptKey.B; // It doesn't return value modulo N (256), because during writing character to the output file, we have to cast it to byte anyway.
 
-        void EncryptAndWriteCharacter(int character, AffineKey encryptKey, FileStream outputFileStream)
+        private void EncryptAndWriteCharacter(int character, AffineKey encryptKey, FileStream outputFileStream)
         {
             int cryptedCharacter = EncryptCharacter(character, encryptKey);
             outputFileStream.WriteByte((byte)cryptedCharacter); // Write character which correspond to encrypted byte to the output file.
         }
 
-        void EncryptFileExtension(string inputFilePath, FileStream outputFileStream, AffineKey encryptKey)
+        private void EncryptFileExtension(string inputFilePath, FileStream outputFileStream, AffineKey encryptKey)
         {
             string extension = Path.GetExtension(inputFilePath);
             extension = extension.Substring(1); // Remove dot from extension. (To encrypt dot, remove this line and don't add dot in DecryptFileExtension)
@@ -28,7 +28,7 @@ namespace CryptoStegano
                 EncryptAndWriteCharacter(extension[i], encryptKey, outputFileStream);
         }
 
-        string DecryptFileExtension(FileStream inputFileStream, AffineKey decryptKey)
+        private string DecryptFileExtension(FileStream inputFileStream, AffineKey decryptKey)
         {
             int inputCharacter = inputFileStream.ReadByte(); // Read encrypted extension length.
             int extensionLength = Ring.Modulo(EncryptCharacter(inputCharacter, decryptKey), Ring.N);
@@ -46,7 +46,7 @@ namespace CryptoStegano
             return extensionStringBuilder.ToString();
         }
 
-        void EncryptUntilEndOfFile(FileStream inputFileStream, FileStream outputFileStream, AffineKey encryptKey)
+        private void EncryptUntilEndOfFile(FileStream inputFileStream, FileStream outputFileStream, AffineKey encryptKey)
         {
             int inputCharacter;
             bool notEndOfFile;
@@ -60,7 +60,7 @@ namespace CryptoStegano
             while (notEndOfFile);
         }
 
-        public void EncryptFile(string inputFilePath, string outputFilePath, AffineKey encryptKey)
+        public void EncryptFile(string inputFilePath, string outputFilePath, AffineKey encryptKey) // outputFilePath - full output file path without extension; method adds extension
         {
             using (FileStream inputFileStream = MakeInputStream(inputFilePath), outputFileStream = MakeOutputStream(outputFilePath + encryptedFileExtension))
             {
@@ -73,8 +73,7 @@ namespace CryptoStegano
         {
             AffineKey decryptKey = encryptKey.GetInverseMod(Ring.N);
 
-            using (FileStream inputFileStream = MakeInputStream(inputFilePath), 
-                    outputFileStream = MakeOutputStream(outputFilePath + DecryptFileExtension(inputFileStream, decryptKey)))
+            using (FileStream inputFileStream = MakeInputStream(inputFilePath), outputFileStream = MakeOutputStream(outputFilePath + DecryptFileExtension(inputFileStream, decryptKey)))
             {
                 EncryptUntilEndOfFile(inputFileStream, outputFileStream, decryptKey);
             }

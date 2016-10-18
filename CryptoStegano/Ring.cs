@@ -27,12 +27,9 @@
             matrix[1, 1] = Modulo(matrix[1, 1], n);
         }
 
-        public static int Inverse(int a, int n) // rozszerzony algorytm Euklidesa
+        public static int Inverse(int a, int n) // Extended Euclidean Algorithm.
         {
-            a = Modulo(a, n); // bo algorytm źle działa dla wielu liczb ujemnych, np. -1, -9, -19, -21, -25, ...
-            // można to sprawdzić w pętli - stworzyć podobną funkcję Inverse2, ale bez tej linijki i porównać wartości obu funkcji 
-            // albo usunąć tą linijkę, a w Inverse2 dać (byte)a
-            // równoważne: a = (byte)a, dla n=256
+            a = Modulo(a, n); // Because algorithm doesn't work well for some negative numbers, e.g. -1, -9, -19, -21, -25, ...
             int q, r, u0 = 1, u1 = 0, v0 = 0, v1 = 1, uv, nCopy = n;
             while (a != 0)
             {
@@ -45,10 +42,10 @@
                 n = a;
                 a = r;
             }
-            if (n == 1) // n = NWD(a,n);
+            if (n == 1) // n = GCD(a,n)
             {
-                if (v0 > 0) return v0; // v0 = a', gdy v0 > 0
-                else return nCopy + v0; // n - v0 = a', gdy v0 < 0
+                if (v0 > 0) return v0; // v0 = a', if v0 > 0
+                else return nCopy + v0; // n - v0 = a', if v0 < 0
             }
             else return 0;
         }

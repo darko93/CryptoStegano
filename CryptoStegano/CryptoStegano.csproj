@@ -43,10 +43,13 @@
     <Compile Include="AffineCipher.cs" />
     <Compile Include="AffineKey.cs" />
     <Compile Include="Cipher.cs" />
+    <Compile Include="Cryptoanalyser.cs" />
     <Compile Include="Digram.cs" />
+    <Compile Include="HillCipher.cs" />
     <Compile Include="HillKey.cs" />
     <Compile Include="Matrix2x2.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Randomizer.cs" />
     <Compile Include="Ring.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

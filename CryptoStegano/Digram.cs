@@ -28,6 +28,12 @@
             vector[1] = v0 * matrix[0, 1] + v1 * matrix[1, 1];
         }
 
+        public void Add(Digram digram)
+        {
+            vector[0] += digram[0];
+            vector[1] += digram[1];
+        }
+
         public static Digram operator *(int scalar, Digram digram)
         {
             return new Digram(scalar * digram[0], scalar * digram[1]);
