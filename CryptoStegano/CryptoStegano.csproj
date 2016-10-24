@@ -48,6 +48,7 @@
     <Compile Include="HillCipher.cs" />
     <Compile Include="HillKey.cs" />
     <Compile Include="Matrix2x2.cs" />
+    <Compile Include="MessageHider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Randomizer.cs" />
     <Compile Include="Ring.cs" />

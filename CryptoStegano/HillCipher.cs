@@ -39,7 +39,7 @@ namespace CryptoStegano
         {
             Digram digram = new Digram();
             string extension = Path.GetExtension(inputFilePath);
-            extension = extension.Substring(1); // Remove dot from extension. (To encrypt dot, remove this line and don't add dot in DecryptFileExtension)
+            extension = extension.Substring(1); // Remove dot from extension. (To encrypt dot, remove this line and don't add dot in DecryptFileExtension. Also set correct position in Cryptoanalyser.)
 
             if (extension.Length % 2 == 0)
             {

@@ -21,7 +21,7 @@ namespace CryptoStegano
         private void EncryptFileExtension(string inputFilePath, FileStream outputFileStream, AffineKey encryptKey)
         {
             string extension = Path.GetExtension(inputFilePath);
-            extension = extension.Substring(1); // Remove dot from extension. (To encrypt dot, remove this line and don't add dot in DecryptFileExtension)
+            extension = extension.Substring(1); // Remove dot from extension. (To encrypt dot, remove this line and don't add dot in DecryptFileExtension. Also set correct position in Cryptoanalyser.)
             int extensionLength = extension.Length;
             EncryptAndWriteCharacter(extensionLength, encryptKey, outputFileStream);
             for (int i = 0; i <= extensionLength - 1; i++)
