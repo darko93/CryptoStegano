@@ -7,9 +7,9 @@ namespace CryptoStegano
     {
         public bool HideMessage(string messageFilePath, string inputCoverFilePath, string outputCoverFilePath, int hidingStartByte)
         {
-            using (FileStream messageFileStream = new FileStream(messageFilePath, FileMode.Open, FileAccess.Read),
-                inputCoverFileStream = new FileStream(inputCoverFilePath, FileMode.Open, FileAccess.Read),
-                outputCoverFileStream = new FileStream(outputCoverFilePath, FileMode.Create, FileAccess.ReadWrite))
+            using (FileStream messageFileStream = StreamMaker.MakeInputStream(messageFilePath),
+                inputCoverFileStream = StreamMaker.MakeInputStream(inputCoverFilePath),
+                outputCoverFileStream = StreamMaker.MakeOutputStream(outputCoverFilePath))
             {
                 if (hidingStartByte > inputCoverFileStream.Length - messageFileStream.Length * 8)
                     return false; // Hiding start byte or message file is too large to hold all the message inside cover file.
@@ -35,7 +35,7 @@ namespace CryptoStegano
                     {
                         messageCharacterBit = messageCharacter & 1; // Obtain current message character bit.
                         coverCharacter = inputCoverFileStream.ReadByte();
-                        coverCharacter &= 254; // Reset least significant bit fromm the cover file character.
+                        coverCharacter &= 254; // Reset least significant bit from the cover file character.
                         coverCharacter |= messageCharacterBit; // Change least significant bit value of the cover file character to the value of the current message character bit.
                         // coverCharacter &= (254 | messageCharacterBit) for short
                         outputCoverFileStream.WriteByte((byte)coverCharacter);

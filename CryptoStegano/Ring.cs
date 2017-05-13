@@ -19,7 +19,7 @@
             digram[1] = Modulo(digram[1], n);
         }
 
-        public static void Modulo(Matrix2x2 matrix, int n)
+        public static void Modulo(Matrix2 matrix, int n)
         {
             matrix[0, 0] = Modulo(matrix[0, 0], n);
             matrix[0, 1] = Modulo(matrix[0, 1], n);

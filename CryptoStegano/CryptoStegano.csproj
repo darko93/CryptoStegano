@@ -42,16 +42,18 @@
   <ItemGroup>
     <Compile Include="AffineCipher.cs" />
     <Compile Include="AffineKey.cs" />
-    <Compile Include="Cipher.cs" />
     <Compile Include="Cryptoanalyser.cs" />
     <Compile Include="Digram.cs" />
     <Compile Include="HillCipher.cs" />
     <Compile Include="HillKey.cs" />
-    <Compile Include="Matrix2x2.cs" />
+    <Compile Include="ICipher.cs" />
+    <Compile Include="IKey.cs" />
+    <Compile Include="Matrix2.cs" />
     <Compile Include="MessageHider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Randomizer.cs" />
     <Compile Include="Ring.cs" />
+    <Compile Include="StreamMaker.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

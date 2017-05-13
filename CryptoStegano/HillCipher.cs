@@ -4,18 +4,17 @@ using System.Text;
 
 namespace CryptoStegano
 {
-    class HillCipher : Cipher
+    class HillCipher : ICipher<HillKey>
     {
         #region Private part
 
         private const string encryptedFileExtension = ".hil";
-        protected override string EncryptedFileExtension => encryptedFileExtension;
+        public string EncryptedFileExtension => encryptedFileExtension;
         
         private void EncryptDigram(Digram digram, HillKey encryptKey) // It doesn't calculate values modulo N (256), because during writing character to the output file, we have to cast it to byte anyway.
         {
             digram.MultiplyBy(encryptKey.Matrix);
-            digram.Add(encryptKey.Digram);
-            //return T * encKey.Matrix_A + encKey.Digram_b; 
+            digram.Add(encryptKey.Digram); 
         }
 
         private void EncryptAndWriteDigram(Digram digram, HillKey encryptKey, FileStream outputFileStream)
@@ -39,12 +38,12 @@ namespace CryptoStegano
         {
             Digram digram = new Digram();
             string extension = Path.GetExtension(inputFilePath);
-            extension = extension.Substring(1); // Remove dot from extension. (To encrypt dot, remove this line and don't add dot in DecryptFileExtension. Also set correct position in Cryptoanalyser.)
+            extension = extension.Substring(1); // Remove dot from extension. (To encrypt dot, remove this line and don't add dot in DecryptFileExtension. Also set correct position in Cryptoanalyser GetKey method.)
 
             if (extension.Length % 2 == 0)
             {
                 digram[0] = extension.Length; // First number is extension length.
-                digram[1] = Randomizer.Instance.Next(256); // First digram = [extension.Length, randomByte], when extension length is even.
+                digram[1] = Randomizer.Next(256); // First digram = [extension.Length, randomByte], when extension length is even.
                 EncryptAndWriteDigram(digram, encryptKey, outputFileStream);
 
                 for (int i = 1; i <= extension.Length - 1; i += 2)
@@ -75,7 +74,7 @@ namespace CryptoStegano
             int extensionLength = digram[0]; // Read extension length.
             StringBuilder extensionStringBuilder = new StringBuilder();
             if (extensionLength % 2 == 1) // If extension length is odd
-                extensionStringBuilder.Append((char)digram[1]); // we have to append second character from first extension digram, because it is first character of extension (not random byte)
+                extensionStringBuilder.Append((char)digram[1]); // we have to append second character from first extension digram, because it is first character of the extension (not random byte)
             for (int i = 1; i <= extensionLength / 2; i++)
             {
                 digram = ReadAndDecryptDigram(inputFileStream, decryptKey);
@@ -92,14 +91,14 @@ namespace CryptoStegano
             if (inputFileStream.Length % 2 == 1) // If file length is odd
             {
                 // then add random number between [0;127].
-                digram[0] = Randomizer.Instance.Next(128); 
+                digram[0] = Randomizer.Next(128); 
                 digram[1] = inputFileStream.ReadByte();
             }
             else // If file length is even
             {
                 // then add two random numbers, where first is between [128;255] and second is between [0;255].
-                digram[0] = 128 + Randomizer.Instance.Next(128); 
-                digram[1] = Randomizer.Instance.Next(256);
+                digram[0] = 128 + Randomizer.Next(128); 
+                digram[1] = Randomizer.Next(256);
             }
             EncryptAndWriteDigram(digram, encryptKey, outputFileStream);
         }
@@ -110,7 +109,7 @@ namespace CryptoStegano
 
             if (digram[0] < 128) // If file length is odd
                 outputFileStream.WriteByte((byte)digram[1]); // then first byte is random, but second must be written to the output file.
-            // If file length is odd, then both bytes are random.
+            // If file length is even, then both bytes are random.
         }
 
         private void EncryptUntilEndOfFile(FileStream inputFileStream, FileStream outputFileStream, HillKey encryptKey)
@@ -134,9 +133,12 @@ namespace CryptoStegano
 
         #region Public part
 
+        public bool IsEncryptedFile(string filePath) =>
+            String.Equals(Path.GetExtension(filePath), encryptedFileExtension, StringComparison.InvariantCultureIgnoreCase);
+
         public void EncryptFile(string inputFilePath, string outputFilePath, HillKey encrptKey) // outputFilePath - full output file path without extension; method adds extension
         {
-            using (FileStream inputFileStream = MakeInputStream(inputFilePath), outputFileStream = MakeOutputStream(outputFilePath + encryptedFileExtension))
+            using (FileStream inputFileStream = StreamMaker.MakeInputStream(inputFilePath), outputFileStream = StreamMaker.MakeOutputStream(outputFilePath + encryptedFileExtension))
             {
                 EncryptFileExtension(inputFilePath, outputFileStream, encrptKey);
                 EqualizeFileLengthEncryption(inputFileStream, outputFileStream, encrptKey);
@@ -147,11 +149,10 @@ namespace CryptoStegano
         public void DecryptFile(string inputFilePath, string outputFilePath, HillKey encryptKey) // outputFilePath - full output file path without extension; method decrypts extension and adds it
         {
             HillKey decryptKey = encryptKey.GetInverseMod(Ring.N);
-
-            using (FileStream fsIn = MakeInputStream(inputFilePath), fsOut = MakeOutputStream(outputFilePath + DecryptFileExtension(fsIn, decryptKey)))
+            using (FileStream inputFileStream = StreamMaker.MakeInputStream(inputFilePath), outputFileStream = StreamMaker.MakeOutputStream(outputFilePath + DecryptFileExtension(inputFileStream, decryptKey)))
             {
-                EqualizeFileLengthDecryption(fsIn, fsOut, decryptKey);
-                EncryptUntilEndOfFile(fsIn, fsOut, decryptKey);
+                EqualizeFileLengthDecryption(inputFileStream, outputFileStream, decryptKey);
+                EncryptUntilEndOfFile(inputFileStream, outputFileStream, decryptKey);
             }
         }
 

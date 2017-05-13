@@ -20,7 +20,7 @@
             vector[1] *= scalar;
         }
 
-        public void MultiplyBy(Matrix2x2 matrix)
+        public void MultiplyBy(Matrix2 matrix)
         {
             int v0 = vector[0];
             int v1 = vector[1];
@@ -44,7 +44,7 @@
             return new Digram(digram1[0] + digram2[0], digram1[1] + digram2[1]);
         }
 
-        public static Digram operator *(Digram digram, Matrix2x2 matrix)
+        public static Digram operator *(Digram digram, Matrix2 matrix)
         {
             return new Digram(digram[0] * matrix[0, 0] + digram[1] * matrix[1, 0], digram[0] * matrix[0, 1] + digram[1] * matrix[1, 1]);
         }

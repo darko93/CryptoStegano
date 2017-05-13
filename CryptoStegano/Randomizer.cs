@@ -3,15 +3,12 @@ using System.Collections.Generic;
 
 namespace CryptoStegano
 {
-    class Randomizer
-    {
-        private Randomizer() { }
-        public static Randomizer Instance { get; } = new Randomizer();
-        
+    static class Randomizer
+    {        
         private static readonly Random random = new Random();
         private static readonly object syncLock = new object();
 
-        public int Next(int minValue, int maxValue)
+        public static int Next(int minValue, int maxValue)
         {
             lock(syncLock)
             {
@@ -19,7 +16,7 @@ namespace CryptoStegano
             }
         }
 
-        public int Next(int maxValue)
+        public static int Next(int maxValue)
         {
             lock(syncLock)
             {

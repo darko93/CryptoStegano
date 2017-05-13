@@ -1,27 +1,28 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 
 namespace CryptoStegano
 {
-    public class AffineCipher : Cipher
+    public class AffineCipher : ICipher<AffineKey>
     {
         private const string encryptedFileExtension = ".aff";
 
-        protected override string EncryptedFileExtension => encryptedFileExtension;
+        public string EncryptedFileExtension => encryptedFileExtension;
 
         private int EncryptCharacter(int character, AffineKey encryptKey) =>
             encryptKey.A * character + encryptKey.B; // It doesn't return value modulo N (256), because during writing character to the output file, we have to cast it to byte anyway.
 
         private void EncryptAndWriteCharacter(int character, AffineKey encryptKey, FileStream outputFileStream)
         {
-            int cryptedCharacter = EncryptCharacter(character, encryptKey);
-            outputFileStream.WriteByte((byte)cryptedCharacter); // Write character which correspond to encrypted byte to the output file.
+            int encryptedCharacter = EncryptCharacter(character, encryptKey);
+            outputFileStream.WriteByte((byte)encryptedCharacter); // Write character which correspond to encrypted byte to the output file.
         }
 
         private void EncryptFileExtension(string inputFilePath, FileStream outputFileStream, AffineKey encryptKey)
         {
             string extension = Path.GetExtension(inputFilePath);
-            extension = extension.Substring(1); // Remove dot from extension. (To encrypt dot, remove this line and don't add dot in DecryptFileExtension. Also set correct position in Cryptoanalyser.)
+            extension = extension.Substring(1); // Remove dot from extension. (To encrypt dot, remove this line and don't add dot in DecryptFileExtension. Also set correct position in Cryptoanalyser GetKey method.)
             int extensionLength = extension.Length;
             EncryptAndWriteCharacter(extensionLength, encryptKey, outputFileStream);
             for (int i = 0; i <= extensionLength - 1; i++)
@@ -60,9 +61,12 @@ namespace CryptoStegano
             while (notEndOfFile);
         }
 
+        public bool IsEncryptedFile(string filePath) =>
+            String.Equals(Path.GetExtension(filePath), encryptedFileExtension, StringComparison.InvariantCultureIgnoreCase);
+
         public void EncryptFile(string inputFilePath, string outputFilePath, AffineKey encryptKey) // outputFilePath - full output file path without extension; method adds extension
         {
-            using (FileStream inputFileStream = MakeInputStream(inputFilePath), outputFileStream = MakeOutputStream(outputFilePath + encryptedFileExtension))
+            using (FileStream inputFileStream = StreamMaker.MakeInputStream(inputFilePath), outputFileStream = StreamMaker.MakeOutputStream(outputFilePath + encryptedFileExtension))
             {
                 EncryptFileExtension(inputFilePath, outputFileStream, encryptKey);
                 EncryptUntilEndOfFile(inputFileStream, outputFileStream, encryptKey);
@@ -73,7 +77,17 @@ namespace CryptoStegano
         {
             AffineKey decryptKey = encryptKey.GetInverseMod(Ring.N);
 
-            using (FileStream inputFileStream = MakeInputStream(inputFilePath), outputFileStream = MakeOutputStream(outputFilePath + DecryptFileExtension(inputFileStream, decryptKey)))
+            using (FileStream inputFileStream = StreamMaker.MakeInputStream(inputFilePath), outputFileStream = StreamMaker.MakeOutputStream(outputFilePath + DecryptFileExtension(inputFileStream, decryptKey)))
+            {
+                EncryptUntilEndOfFile(inputFileStream, outputFileStream, decryptKey);
+            }
+        }
+
+        internal void DecryptFile(FileStream inputFileStream, string outputFilePath, AffineKey encryptKey) // outputFilePath - with correct extension given by Cryptoanalyser
+        {
+            AffineKey decryptKey = encryptKey.GetInverseMod(Ring.N);
+
+            using (FileStream outputFileStream = StreamMaker.MakeOutputStream(outputFilePath))
             {
                 EncryptUntilEndOfFile(inputFileStream, outputFileStream, decryptKey);
             }

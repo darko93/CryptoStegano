@@ -1,6 +1,6 @@
 ﻿namespace CryptoStegano
 {
-    public class AffineKey
+    public class AffineKey : IKey<AffineKey>
     {
         public int A { get; private set; }
         public int B { get; private set; }
@@ -18,6 +18,6 @@
             return new AffineKey(inversedA, inversedB);
         }
 
-        public bool IsCorrectMod(int n) => Ring.Inverse(A, Ring.N) != 0;
+        public bool IsInvertibleMod(int n) => Ring.Inverse(A, Ring.N) != 0;
     }
 }
