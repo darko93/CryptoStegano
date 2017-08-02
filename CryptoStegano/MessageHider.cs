@@ -3,90 +3,88 @@ using System.IO;
 
 namespace CryptoStegano
 {
-    public class MessageHider
+    public class MessageHider : ProgressNotificator
     {
-        public bool HideMessage(string messageFilePath, string inputCoverFilePath, string outputCoverFilePath, int hidingStartByte)
+        public void HideMessage(string messageFilePath, string inputCoverFilePath, string outputCoverFilePath, int hidingStartByte)
         {
-            using (FileStream messageFileStream = StreamMaker.MakeInputStream(messageFilePath),
-                inputCoverFileStream = StreamMaker.MakeInputStream(inputCoverFilePath),
-                outputCoverFileStream = StreamMaker.MakeOutputStream(outputCoverFilePath))
+            using (FileStream messageStream = StreamMaker.MakeInputStream(messageFilePath))
+            using (FileStream inputCoverStream = StreamMaker.MakeInputStream(inputCoverFilePath))
+            using (FileStream outputCoverStream = StreamMaker.MakeOutputStream(outputCoverFilePath))
             {
-                if (hidingStartByte > inputCoverFileStream.Length - messageFileStream.Length * 8)
-                    return false; // Hiding start byte or message file is too large to hold all the message inside cover file.
+                if (hidingStartByte > inputCoverStream.Length - messageStream.Length * 8)
+                    throw new ArgumentException("Hiding start byte or message file is too large to hold all the message inside cover file.");
 
-                int messageCharacter, coverCharacter, messageCharacterBit;
+                int coverCharacter;
 
                 // Move to hiding start byte.
                 for (int i = 0; i < hidingStartByte; i++)
                 {
-                    coverCharacter = inputCoverFileStream.ReadByte();
-                    outputCoverFileStream.WriteByte((byte)coverCharacter);
+                    coverCharacter = inputCoverStream.ReadByte();
+                    outputCoverStream.WriteByte((byte)coverCharacter);
+                    SetProgressPercentage(inputCoverStream);
                 }
 
-                bool endOfMessageFile;
-                do
+                int messageCharacter, messageCharacterBit;
+                bool endOfMessageFile = false;
+                while (!endOfMessageFile)
                 {
-                    // End of file shouldn't appear, because of checking hidding start byte at the beginning of the method.
-                    messageCharacter = messageFileStream.ReadByte();
+                    // End of file shouldn't appear now, because of checking hidding start byte at the beginning of the method.
+                    messageCharacter = messageStream.ReadByte();
                     endOfMessageFile = messageCharacter == -1;
                     if (endOfMessageFile)
                         messageCharacter = 0; // 0 means end of message that is being hidden.
                     for (int i = 0; i < 8; i++)
                     {
                         messageCharacterBit = messageCharacter & 1; // Obtain current message character bit.
-                        coverCharacter = inputCoverFileStream.ReadByte();
+                        coverCharacter = inputCoverStream.ReadByte();
                         coverCharacter &= 254; // Reset least significant bit from the cover file character.
                         coverCharacter |= messageCharacterBit; // Change least significant bit value of the cover file character to the value of the current message character bit.
                         // coverCharacter &= (254 | messageCharacterBit) for short
-                        outputCoverFileStream.WriteByte((byte)coverCharacter);
+                        outputCoverStream.WriteByte((byte)coverCharacter);
                         messageCharacter = messageCharacter >> 1;
                     }
+                    SetProgressPercentage(inputCoverStream);
                 }
-                while (!endOfMessageFile);
 
                 // Rewrite rest of the cover file.
-                do
+                bool endOfCoverFile = false;
+                while (!endOfCoverFile)
                 {
-                    coverCharacter = inputCoverFileStream.ReadByte();
-                    endOfMessageFile = coverCharacter == -1;
-                    if (!endOfMessageFile)
-                        outputCoverFileStream.WriteByte((byte)coverCharacter);
+                    coverCharacter = inputCoverStream.ReadByte();
+                    endOfCoverFile = coverCharacter == -1;
+                    if (!endOfCoverFile)
+                        outputCoverStream.WriteByte((byte)coverCharacter);
                 }
-                while (!endOfMessageFile);
-
-                return true;
             }
         }
 
         // In general false returned means that end of cover file reached before message has been read.
-        public static bool DiscoverMessage(string coveredMessageFilePath, string readMessageFilePath, int hiddingStartByte)
+        public static void DiscoverMessage(string coverMessageFilePath, string readMessageFilePath, int hiddingStartByte)
         {
-            using (FileStream coverFileStream = new FileStream(coveredMessageFilePath, FileMode.Open, FileAccess.Read), readMessageFileStream = new FileStream(readMessageFilePath, FileMode.Create, FileAccess.Write))
+            using (FileStream coverStream = StreamMaker.MakeInputStream(coverMessageFilePath))
+            using (FileStream readMessageStream = StreamMaker.MakeOutputStream(readMessageFilePath))
             {
-                if (hiddingStartByte > coverFileStream.Length)
-                    return false; // Hiding start byte cannot be greater than covered message file length.
+                if (hiddingStartByte > coverStream.Length)
+                    throw new ArgumentException("Hiding start byte cannot be greater than covered message file length.");
 
-                coverFileStream.Position = hiddingStartByte;
+                coverStream.Position = hiddingStartByte;
                 int messageCharacter, coverCharacter, messageCharacterBit;
-                bool notEndOfMessage;
-                do
+                bool endOfMessage = false;
+                while (!endOfMessage)
                 {
                     messageCharacter = 0;
                     for (int i = 0; i < 8; i++)
                     {
-                        coverCharacter = coverFileStream.ReadByte();
+                        coverCharacter = coverStream.ReadByte();
                         if (coverCharacter == -1)
-                            return false; // End of cover file reached before message has been read.
+                            return; // End of cover file reached before end of message character found.
                         messageCharacterBit = coverCharacter & 1;
                         messageCharacter |= messageCharacterBit << i;
                     }
-                    notEndOfMessage = messageCharacter != 0;
-                    if (notEndOfMessage)
-                        readMessageFileStream.WriteByte((byte)messageCharacter);
+                    endOfMessage = messageCharacter == 0;
+                    if (!endOfMessage)
+                        readMessageStream.WriteByte((byte)messageCharacter);
                 }
-                while (notEndOfMessage);
-
-                return true;
             }
         }
     }

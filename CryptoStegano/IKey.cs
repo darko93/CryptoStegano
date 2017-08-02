@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CryptoStegano
 {
-    interface IKey<TKey> where TKey : IKey<TKey>
+    public interface IKey<TKey> where TKey : IKey<TKey>
     {
         bool IsInvertibleMod(int n);
         TKey GetInverseMod(int n);
