@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -102,10 +103,14 @@ namespace CryptoStegano
             return encryptKey;
         }
 
-        private AffineKey TryGetEncryptKey(string inputFilePath, string outputFilePath)
+        public AffineKey TryGetEncryptKeyByOutputFilePathWithExtension(string inputFilePath, string outputFilePath)
         {
             string originalExtension = Path.GetExtension(outputFilePath);
+            return TryGetEncryptKeyByOriginalExtension(inputFilePath, originalExtension);
+        }
 
+        public AffineKey TryGetEncryptKeyByOriginalExtension(string inputFilePath, string originalExtension)
+        {
             if (!signatures.ContainsKey(originalExtension))
                 throw new ArgumentException($"Signatures dictionary does not contain extension \"{originalExtension}\". Encrypt key cannot be calculated. Add \"{originalExtension}\" extension and its signature to the signatures dictionary first.");
 
@@ -120,13 +125,13 @@ namespace CryptoStegano
 
         public void DecryptFile(string inputFilePath, string outputFilePath) // outputFilePath - with CORRECT extension
         {
-            AffineKey encryptKey = TryGetEncryptKey(inputFilePath, outputFilePath);
+            AffineKey encryptKey = TryGetEncryptKeyByOutputFilePathWithExtension(inputFilePath, outputFilePath);
             affineCipher.DecryptFile(inputFilePath, outputFilePath, encryptKey);
         }
 
         public async Task DecryptFileAsync(string inputFilePath, string outputFilePath, CancellationToken cancellationToken)
         {
-            AffineKey encryptKey = TryGetEncryptKey(inputFilePath, outputFilePath);
+            AffineKey encryptKey = TryGetEncryptKeyByOutputFilePathWithExtension(inputFilePath, outputFilePath);
             await affineCipher.DecryptFileAsync(inputFilePath, outputFilePath, encryptKey, cancellationToken);
         }
 

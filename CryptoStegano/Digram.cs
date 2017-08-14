@@ -2,41 +2,41 @@
 {
     public class Digram
     {
-        private int[] vector;
+        private int[] digram = null;
 
         public Digram()
         {
-            vector = new int[2];
+            digram = new int[2];
         }
 
-        public Digram(int v0, int v1)
+        public Digram(int d0, int d1)
         {
-            vector = new int[2] { v0, v1 };
+            digram = new int[2] { d0, d1 };
         }
 
-        public void MultiplyBy(int scalar)
+        public void MultiplyBy(int s)
         {
-            vector[0] *= scalar;
-            vector[1] *= scalar;
+            digram[0] *= s;
+            digram[1] *= s;
         }
 
         public void MultiplyBy(Matrix2 matrix)
         {
-            int v0 = vector[0];
-            int v1 = vector[1];
-            vector[0] = v0 * matrix[0, 0] + v1 * matrix[1, 0];
-            vector[1] = v0 * matrix[0, 1] + v1 * matrix[1, 1];
+            int d0 = digram[0];
+            int d1 = digram[1];
+            digram[0] = d0 * matrix[0, 0] + d1 * matrix[1, 0];
+            digram[1] = d0 * matrix[0, 1] + d1 * matrix[1, 1];
         }
 
         public void Add(Digram digram)
         {
-            vector[0] += digram[0];
-            vector[1] += digram[1];
+            this.digram[0] += digram[0];
+            this.digram[1] += digram[1];
         }
 
-        public static Digram operator *(int scalar, Digram digram)
+        public static Digram operator *(int s, Digram digram)
         {
-            return new Digram(scalar * digram[0], scalar * digram[1]);
+            return new Digram(s * digram[0], s * digram[1]);
         }
 
         public static Digram operator +(Digram digram1, Digram digram2)
@@ -51,8 +51,8 @@
 
         public int this[int i]
         {
-            get { return vector[i]; }
-            set { vector[i] = value; }
+            get { return digram[i]; }
+            set { digram[i] = value; }
         }
     }
 }

@@ -39,9 +39,9 @@
             array[1, 1] *= s;
         }
 
-        public static Matrix2 operator *(int scalar, Matrix2 matrix)
+        public static Matrix2 operator *(int s, Matrix2 matrix)
         {
-            return new Matrix2(scalar * matrix[0, 0], scalar * matrix[0, 1], scalar * matrix[1, 0], scalar * matrix[1, 1]);
+            return new Matrix2(s * matrix[0, 0], s * matrix[0, 1], s * matrix[1, 0], s * matrix[1, 1]);
         }
 
         public int this[int i, int j]
