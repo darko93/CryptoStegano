@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace CryptoStegano
 {
-    public class Cryptoanalyser : ProgressNotificator
+    public class Cryptoanalyser : IFilesProcessor
     {
         // Contains values associated with signature bytes, which allow calculate encypt key.
         private class Signature
@@ -31,19 +33,18 @@ namespace CryptoStegano
 
         public Cryptoanalyser()
         {
-            affineCipher.ProgressUpdated += OnProgressUpdated;
             signatures = new Dictionary<string, Signature>(5, StringComparer.OrdinalIgnoreCase);
 
             // I know, that all of these signatures are acceptable - key can be calculated from first two bytes of each array.
             // key.A * byte_from_array + key.B = encrypted_byte
-            AddExtensionAndSignatureBytes("png", new byte[] { 0x89, 0x50, 0x4E, 0x47 });
-            AddExtensionAndSignatureBytes("zip", new byte[] { 0x50, 0x4B, 0x03, 0x04 });
-            AddExtensionAndSignatureBytes("mp3", new byte[] { 0x49, 0x44, 0x33, 0x03 });
-            AddExtensionAndSignatureBytes("jpg", new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 });
-            AddExtensionAndSignatureBytes("pdf", new byte[] { 0x25, 0x50, 0x44, 0x46 });
+            AddExtensionSignature("png", new byte[] { 0x89, 0x50, 0x4E, 0x47 });
+            AddExtensionSignature("zip", new byte[] { 0x50, 0x4B, 0x03, 0x04 });
+            AddExtensionSignature("mp3", new byte[] { 0x49, 0x44, 0x33, 0x03 });
+            AddExtensionSignature("jpg", new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 });
+            AddExtensionSignature("pdf", new byte[] { 0x25, 0x50, 0x44, 0x46 });
         }
 
-        public bool AddExtensionAndSignatureBytes(string extension, byte[] signatureBytes)
+        public bool AddExtensionSignature(string extension, byte[] signatureBytes)
         {
             // Look for pair of signature bytes, which difference is invertible modulo 256, so encrypt key can be calculated.
             for (int signatureByte1Position = 0; signatureByte1Position < signatureBytes.Length; signatureByte1Position++)
@@ -75,11 +76,6 @@ namespace CryptoStegano
             }
         }
 
-        private void OnProgressUpdated(object sender)
-        {
-            ProgressPercentage = affineCipher.ProgressPercentage;
-        }
-
         private AffineKey CalculateEncryptKey(Signature signature, int encryptedSignatureByte1, int encryptedSignatureByte2)
         {
             int deltaSignatureBytes = -signature.DeltaBytes; // Yes, I want minus delta.
@@ -106,12 +102,12 @@ namespace CryptoStegano
             return encryptKey;
         }
 
-        public void DecryptFile(string inputFilePath, string outputFilePath) // outputFilePath - without extension
+        private AffineKey TryGetEncryptKey(string inputFilePath, string outputFilePath)
         {
             string originalExtension = Path.GetExtension(outputFilePath);
 
             if (!signatures.ContainsKey(originalExtension))
-                throw new ArgumentException($"Signatures dictionary does not contain extension \"{originalExtension}\".");
+                throw new ArgumentException($"Signatures dictionary does not contain extension \"{originalExtension}\". Encrypt key cannot be calculated. Add \"{originalExtension}\" extension and its signature to the signatures dictionary first.");
 
             AffineKey encryptKey;
             using (FileStream inputFileStream = StreamMaker.MakeInputStream(inputFilePath))
@@ -119,7 +115,34 @@ namespace CryptoStegano
                 encryptKey = GetEncryptKey(inputFileStream, originalExtension);
             }
 
+            return encryptKey;
+        }
+
+        public void DecryptFile(string inputFilePath, string outputFilePath) // outputFilePath - with CORRECT extension
+        {
+            AffineKey encryptKey = TryGetEncryptKey(inputFilePath, outputFilePath);
             affineCipher.DecryptFile(inputFilePath, outputFilePath, encryptKey);
         }
+
+        public async Task DecryptFileAsync(string inputFilePath, string outputFilePath, CancellationToken cancellationToken)
+        {
+            AffineKey encryptKey = TryGetEncryptKey(inputFilePath, outputFilePath);
+            await affineCipher.DecryptFileAsync(inputFilePath, outputFilePath, encryptKey, cancellationToken);
+        }
+
+        public async Task DecryptFileAsync(string inputFilePath, string outputFilePath)
+            => await DecryptFileAsync(inputFilePath, outputFilePath, CancellationToken.None);
+
+        #region IFilesProcessor
+
+        public int ProgressPercentage => affineCipher.ProgressPercentage;
+
+        public event Action<object> ProgressUpdated
+        {
+            add { affineCipher.ProgressUpdated += value; }
+            remove { affineCipher.ProgressUpdated -= value; }
+        }
+
+        #endregion IFIlesProcessor
     }
 }

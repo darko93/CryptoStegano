@@ -1,15 +1,18 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace CryptoStegano
 {
-    public class MessageHider : ProgressNotificator
+    public class MessageHider : FilesProcessor
     {
         public void HideMessage(string messageFilePath, string inputCoverFilePath, string outputCoverFilePath, int hidingStartByte)
         {
+            base.outputFilePath = outputCoverFilePath;
             using (FileStream messageStream = StreamMaker.MakeInputStream(messageFilePath))
             using (FileStream inputCoverStream = StreamMaker.MakeInputStream(inputCoverFilePath))
-            using (FileStream outputCoverStream = StreamMaker.MakeOutputStream(outputCoverFilePath))
+            using (FileStream outputCoverStream = StreamMaker.MakeOutputStream(base.outputFilePath))
             {
                 if (hidingStartByte > inputCoverStream.Length - messageStream.Length * 8)
                     throw new ArgumentException("Hiding start byte or message file is too large to hold all the message inside cover file.");
@@ -21,7 +24,7 @@ namespace CryptoStegano
                 {
                     coverCharacter = inputCoverStream.ReadByte();
                     outputCoverStream.WriteByte((byte)coverCharacter);
-                    SetProgressPercentage(inputCoverStream);
+                    SetProgressPercentageAndCheckCancellation(inputCoverStream);
                 }
 
                 int messageCharacter, messageCharacterBit;
@@ -43,7 +46,7 @@ namespace CryptoStegano
                         outputCoverStream.WriteByte((byte)coverCharacter);
                         messageCharacter = messageCharacter >> 1;
                     }
-                    SetProgressPercentage(inputCoverStream);
+                    SetProgressPercentageAndCheckCancellation(inputCoverStream);
                 }
 
                 // Rewrite rest of the cover file.
@@ -53,13 +56,26 @@ namespace CryptoStegano
                     coverCharacter = inputCoverStream.ReadByte();
                     endOfCoverFile = coverCharacter == -1;
                     if (!endOfCoverFile)
+                    {
                         outputCoverStream.WriteByte((byte)coverCharacter);
+                        SetProgressPercentageAndCheckCancellation(inputCoverStream);
+                    }
+                    else
+                        NotifyFinishedWork();
                 }
             }
         }
 
-        // In general false returned means that end of cover file reached before message has been read.
-        public static void DiscoverMessage(string coverMessageFilePath, string readMessageFilePath, int hiddingStartByte)
+        public async Task HideMessageAsync(string messageFilePath, string inputCoverFilePath, string outputCoverFilePath, int hidingStartByte, CancellationToken cancellationToken)
+        {
+            CancellationToken = cancellationToken;
+            await Task.Run(() => HideMessage(messageFilePath, inputCoverFilePath, outputCoverFilePath, hidingStartByte), cancellationToken);
+        }
+
+        public async Task HideMessageAsync(string messageFilePath, string inputCoverFilePath, string outputCoverFilePath, int hidingStartByte) =>
+            await HideMessageAsync(messageFilePath, inputCoverFilePath, outputCoverFilePath, hidingStartByte, CancellationToken.None);
+
+        public void DiscoverMessage(string coverMessageFilePath, string readMessageFilePath, int hiddingStartByte)
         {
             using (FileStream coverStream = StreamMaker.MakeInputStream(coverMessageFilePath))
             using (FileStream readMessageStream = StreamMaker.MakeOutputStream(readMessageFilePath))
@@ -77,15 +93,32 @@ namespace CryptoStegano
                     {
                         coverCharacter = coverStream.ReadByte();
                         if (coverCharacter == -1)
+                        {
+                            NotifyFinishedWork();
                             return; // End of cover file reached before end of message character found.
+                        }
                         messageCharacterBit = coverCharacter & 1;
                         messageCharacter |= messageCharacterBit << i;
                     }
                     endOfMessage = messageCharacter == 0;
                     if (!endOfMessage)
+                    {
                         readMessageStream.WriteByte((byte)messageCharacter);
+                        SetProgressPercentageAndCheckCancellation(coverStream);
+                    }
+                    else
+                        NotifyFinishedWork();
                 }
             }
         }
+
+        public async Task DiscoverMessageAsync(string coverMessageFilePath, string readMessageFilePath, int hiddingStartByte, CancellationToken cancellationToken)
+        {
+            CancellationToken = cancellationToken;
+            await Task.Run(() => DiscoverMessage(coverMessageFilePath, readMessageFilePath, hiddingStartByte), cancellationToken);
+        }
+
+        public async Task DiscoverMessageAsync(string coverMessageFilePath, string readMessageFilePath, int hiddingStartByte) =>
+            await DiscoverMessageAsync(coverMessageFilePath, readMessageFilePath, hiddingStartByte, CancellationToken.None);
     }
 }

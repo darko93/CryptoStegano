@@ -53,27 +53,26 @@ namespace CryptoStegano
             bool endOfFile = false;
             while (!endOfFile)
             {
-                inputCharacter = inputStream.ReadByte(); // Read character as ASCII number.
+                inputCharacter = inputStream.ReadByte();
                 endOfFile = inputCharacter == -1;
                 if (!endOfFile)
                 {
                     EncryptAndWriteCharacter(inputCharacter, encryptKey, outputStream);
-                    SetProgressPercentage(inputStream);
+                    SetProgressPercentageAndCheckCancellation(inputStream);
                 }
                 else
-                    ProgressPercentage = 100;
+                    NotifyFinishedWork();
             }
         }
-        
 
-        internal void DecryptFile(FileStream inputFileStream, string outputFilePath, AffineKey encryptKey) // outputFilePath - with correct extension given by Cryptoanalyser
-        {
-            AffineKey decryptKey = encryptKey.GetInverseMod(Ring.N);
+        //internal void DecryptFile(FileStream inputFileStream, string outputFilePath, AffineKey encryptKey) // outputFilePath - with correct extension given by Cryptoanalyser
+        //{
+        //    AffineKey decryptKey = encryptKey.GetInverseMod(Ring.N);
 
-            using (FileStream outputStream = StreamMaker.MakeOutputStream(outputFilePath))
-            {
-                EncryptUntilEndOfFile(inputFileStream, outputStream, decryptKey);
-            }
-        }
+        //    using (FileStream outputStream = StreamMaker.MakeOutputStream(outputFilePath))
+        //    {
+        //        EncryptUntilEndOfFile(inputFileStream, outputStream, decryptKey);
+        //    }
+        //}
     }
 }

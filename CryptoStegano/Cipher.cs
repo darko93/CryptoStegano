@@ -1,13 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace CryptoStegano
 {
-    public abstract class Cipher<TKey> : ProgressNotificator, ICipher<TKey> where TKey : IKey<TKey>
+    public abstract class Cipher<TKey> : FilesProcessor, ICipher<TKey> where TKey : IKey<TKey>
     {
         #region ICipher
 
@@ -18,14 +16,24 @@ namespace CryptoStegano
 
         public void EncryptFile(string inputFilePath, string outputFilePath, TKey encryptKey)
         {
+            base.outputFilePath = Path.ChangeExtension(outputFilePath, EncryptedFileExtension);
             using (FileStream inputStream = StreamMaker.MakeInputStream(inputFilePath))
-            using (FileStream outputStream = StreamMaker.MakeOutputStream(outputFilePath + EncryptedFileExtension))
+            using (FileStream outputStream = StreamMaker.MakeOutputStream(base.outputFilePath + EncryptedFileExtension))
             {
                 EncryptFileExtension(inputFilePath, outputStream, encryptKey);
                 EqualizeFileLengthEncryption(inputStream, outputStream, encryptKey);
                 EncryptUntilEndOfFile(inputStream, outputStream, encryptKey);
             }
         }
+
+        public async Task EncryptFileAsync(string inputFilePath, string outputFilePath, TKey encryptKey, CancellationToken cancellationToken)
+        {
+            CancellationToken = cancellationToken;
+            await Task.Run(() => EncryptFile(inputFilePath, outputFilePath, encryptKey), cancellationToken);
+        }
+
+        public async Task EncryptFileAsync(string inputFilePath, string outputFilePath, TKey encryptKey) =>
+            await EncryptFileAsync(inputFilePath, outputFilePath, encryptKey, CancellationToken.None);
 
         public void DecryptFile(string inputFilePath, string outputFilePath, TKey encryptKey)
         {
@@ -37,13 +45,23 @@ namespace CryptoStegano
             using (FileStream inputStream = StreamMaker.MakeInputStream(inputFilePath))
             {
                 string decryptedFileExtension = DecryptFileExtension(inputStream, decryptKey);
-                using (FileStream outputStream = StreamMaker.MakeOutputStream(outputFilePath + decryptedFileExtension))
+                base.outputFilePath = Path.ChangeExtension(outputFilePath, decryptedFileExtension);
+                using (FileStream outputStream = StreamMaker.MakeOutputStream(base.outputFilePath + decryptedFileExtension))
                 {
                     EqualizeFileLengthDecryption(inputStream, outputStream, decryptKey);
                     EncryptUntilEndOfFile(inputStream, outputStream, decryptKey);
                 }
             }
         }
+
+        public async Task DecryptFileAsync(string inputFilePath, string outputFilePath, TKey encryptKey, CancellationToken cancellationToken)
+        {
+            CancellationToken = cancellationToken;
+            await Task.Run(() => DecryptFile(inputFilePath, outputFilePath, encryptKey), cancellationToken);
+        }
+
+        public async Task DecryptFileAsync(string inputFilePath, string outputFilePath, TKey encryptKey) =>
+            await DecryptFileAsync(inputFilePath, outputFilePath, encryptKey, CancellationToken.None);
 
         #endregion ICIpher
 

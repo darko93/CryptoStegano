@@ -122,10 +122,10 @@ namespace CryptoStegano
                 {
                     digram[1] = inputStream.ReadByte();
                     EncryptAndWriteDigram(digram, encryptKey, outputStream);
-                    SetProgressPercentage(inputStream);
+                    SetProgressPercentageAndCheckCancellation(inputStream);
                 }
                 else
-                    ProgressPercentage = 100;
+                    NotifyFinishedWork();
             }
         }
     }

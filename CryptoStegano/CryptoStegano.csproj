@@ -48,10 +48,11 @@
     <Compile Include="HillCipher.cs" />
     <Compile Include="HillKey.cs" />
     <Compile Include="ICipher.cs" />
+    <Compile Include="IFilesProcessor.cs" />
     <Compile Include="IKey.cs" />
     <Compile Include="Matrix2.cs" />
     <Compile Include="MessageHider.cs" />
-    <Compile Include="ProgressNotificator.cs" />
+    <Compile Include="FilesProcessor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Randomizer.cs" />
     <Compile Include="Ring.cs" />
