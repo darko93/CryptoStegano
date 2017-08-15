@@ -10,9 +10,9 @@ using System.Windows.Forms;
 
 namespace CryptoSteganoGui
 {
-    public partial class Form1 : Form
+    public partial class CryptoSteganoForm : Form
     {
-        public Form1()
+        public CryptoSteganoForm()
         {
             InitializeComponent();
         }

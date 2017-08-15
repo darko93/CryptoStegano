@@ -36,24 +36,24 @@ namespace CryptoStegano
         {
             signatures = new Dictionary<string, Signature>(5, StringComparer.OrdinalIgnoreCase);
 
-            // I know, that all of these signatures are acceptable - key can be calculated from first two bytes of each array.
+            // All of these signatures are acceptable - key can be calculated from first two bytes of each array.
             // key.A * byte_from_array + key.B = encrypted_byte
-            AddExtensionSignature("png", new byte[] { 0x89, 0x50, 0x4E, 0x47 });
-            AddExtensionSignature("zip", new byte[] { 0x50, 0x4B, 0x03, 0x04 });
-            AddExtensionSignature("mp3", new byte[] { 0x49, 0x44, 0x33, 0x03 });
-            AddExtensionSignature("jpg", new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 });
-            AddExtensionSignature("pdf", new byte[] { 0x25, 0x50, 0x44, 0x46 });
+            AddExtensionWithSignature("png", new byte[] { 0x89, 0x50, 0x4E, 0x47 });
+            AddExtensionWithSignature("zip", new byte[] { 0x50, 0x4B, 0x03, 0x04 });
+            AddExtensionWithSignature("mp3", new byte[] { 0x49, 0x44, 0x33, 0x03 });
+            AddExtensionWithSignature("jpg", new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 });
+            AddExtensionWithSignature("pdf", new byte[] { 0x25, 0x50, 0x44, 0x46 });
         }
 
-        public bool AddExtensionSignature(string extension, byte[] signatureBytes)
+        public bool AddExtensionWithSignature(string extension, byte[] hexSignature)
         {
             // Look for pair of signature bytes, which difference is invertible modulo 256, so encrypt key can be calculated.
-            for (int signatureByte1Position = 0; signatureByte1Position < signatureBytes.Length; signatureByte1Position++)
+            for (int signatureByte1Position = 0; signatureByte1Position < hexSignature.Length; signatureByte1Position++)
             {
-                for (int signatureByte2Position = signatureByte1Position + 1; signatureByte2Position < signatureBytes.Length; signatureByte2Position++)
+                for (int signatureByte2Position = signatureByte1Position + 1; signatureByte2Position < hexSignature.Length; signatureByte2Position++)
                 {
-                    int signatureByte1 = signatureBytes[signatureByte1Position];
-                    int signatureByte2 = signatureBytes[signatureByte2Position];
+                    int signatureByte1 = hexSignature[signatureByte1Position];
+                    int signatureByte2 = hexSignature[signatureByte2Position];
                     if (Ring.IsInvertibleMod(signatureByte1 - signatureByte2, Ring.N))
                     {
                         // Found such pair of bytes, so add them and their numbers in signature array.

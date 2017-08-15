@@ -7,6 +7,8 @@ namespace CryptoStegano
 {
     public class MessageHider : FilesProcessor
     {
+        private const int endOfMessageCharacter = 0;
+
         public void HideMessage(string messageFilePath, string inputCoverFilePath, string outputCoverFilePath, int hidingStartByte)
         {
             base.outputFilePath = outputCoverFilePath;
@@ -35,7 +37,7 @@ namespace CryptoStegano
                     messageCharacter = messageStream.ReadByte();
                     endOfMessageFile = messageCharacter == -1;
                     if (endOfMessageFile)
-                        messageCharacter = 0; // 0 means end of message that is being hidden.
+                        messageCharacter = endOfMessageCharacter;
                     for (int i = 0; i < 8; i++)
                     {
                         messageCharacterBit = messageCharacter & 1; // Obtain current message character bit.
@@ -100,7 +102,7 @@ namespace CryptoStegano
                         messageCharacterBit = coverCharacter & 1;
                         messageCharacter |= messageCharacterBit << i;
                     }
-                    endOfMessage = messageCharacter == 0;
+                    endOfMessage = messageCharacter == endOfMessageCharacter;
                     if (!endOfMessage)
                     {
                         readMessageStream.WriteByte((byte)messageCharacter);

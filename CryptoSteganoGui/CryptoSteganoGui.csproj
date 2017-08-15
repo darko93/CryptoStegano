@@ -46,11 +46,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Form1.cs">
+    <Compile Include="CryptoSteganoForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Form1.Designer.cs">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <Compile Include="CryptoSteganoForm.Designer.cs">
+      <DependentUpon>CryptoSteganoForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="ProgressForm.cs">
@@ -60,8 +60,8 @@
       <DependentUpon>ProgressForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="Form1.resx">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <EmbeddedResource Include="CryptoSteganoForm.resx">
+      <DependentUpon>CryptoSteganoForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ProgressForm.resx">
       <DependentUpon>ProgressForm.cs</DependentUpon>
